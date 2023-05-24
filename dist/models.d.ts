@@ -25,13 +25,13 @@ export interface SizeOptions {
  * @description Alignment for type barCode and qrCode
  *
  */
-export declare type PosPrintPosition = "left" | "center" | "right";
+export declare type PosPrintPosition = 'left' | 'center' | 'right';
 /**
  * @interface
  * @name PosPrintTableField
  * */
 export interface PosPrintTableField {
-    type: "text" | "image";
+    type: 'text' | 'image';
     value?: string;
     path?: string;
     css?: any;
@@ -46,7 +46,7 @@ export interface PosPrintTableField {
 export interface PosPrintData {
     /**
      * @property type
-     * @description type data to print: 'text' | 'barCode' | 'qrcode' | 'image' | 'table'
+     * @description type data to print: 'text' | 'div' | 'barCode' | 'qrcode' | 'image' | 'table' | 'text-column'
      */
     type: PosPrintType;
     value?: string;
@@ -69,4 +69,4 @@ export interface PosPrintData {
  * @type PosPrintType
  * @name PosPrintType
  * **/
-export declare type PosPrintType = "text" | "barCode" | "qrCode" | "image" | "table" | "text-column";
+export declare type PosPrintType = 'text' | 'div' | 'barCode' | 'qrCode' | 'image' | 'table' | 'text-column';

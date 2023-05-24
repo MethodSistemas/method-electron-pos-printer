@@ -1,12 +1,12 @@
 {
   "name": "method-electron-pos-printer",
-  "version": "1.2.26",
+  "version": "1.2.27",
   "description": "Electron thermal 58mm printer",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "mocha",
-    "start": "npm run build && npm run prepare && npm publish",
+    "start": "npm run build && npm publish",
     "demo": "electron ./demo/",
     "pack": "webpack --config ./webpack.config.js",
     "build": "tsc",

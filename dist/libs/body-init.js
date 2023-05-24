@@ -2,100 +2,112 @@
  * Copyright (c) 2019. Author Hubert Formin <hformin@gmail.com>
  */
 
-const fs = require("fs");
-const path = require("path");
-const ipcRender = require("electron").ipcRenderer;
+const fs = require('fs');
+const path = require('path');
+const ipcRender = require('electron').ipcRenderer;
 
-const body = $("#main");
+const body = $('#main');
 let barcodeNumber = 0;
 const image_format = [
-  "apng",
-  "bmp",
-  "gif",
-  "ico",
-  "cur",
-  "jpeg",
-  "jpg",
-  "jpeg",
-  "jfif",
-  "pjpeg",
-  "pjp",
-  "png",
-  "svg",
-  "tif",
-  "tiff",
-  "webp",
+  'apng',
+  'bmp',
+  'gif',
+  'ico',
+  'cur',
+  'jpeg',
+  'jpg',
+  'jpeg',
+  'jfif',
+  'pjpeg',
+  'pjp',
+  'png',
+  'svg',
+  'tif',
+  'tiff',
+  'webp',
 ];
 
-ipcRender.on("body-init", function (event, arg) {
+ipcRender.on('body-init', function (event, arg) {
   body.css({
     width: arg.width ? arg.width : 170,
     margin: arg.margin ? arg.margin : 0,
   });
-  event.sender.send("body-init-reply", { status: true, error: null });
+  event.sender.send('body-init-reply', { status: true, error: null });
 });
 // render each line
-ipcRender.on("render-line", async (event, arg) => {
+ipcRender.on('render-line', async (event, arg) => {
   await renderDataToHTML(event, arg);
 });
 
 const renderDataToHTML = async (event, arg) => {
   switch (arg.line.type) {
-    case "text":
+    case 'text':
       try {
         body.append(generatePageText(arg.line));
         // sending msg
-        event.sender.send("render-line-reply", { status: true, error: null });
+        event.sender.send('render-line-reply', { status: true, error: null });
       } catch (e) {
-        event.sender.send("render-line-reply", {
+        event.sender.send('render-line-reply', {
           status: false,
           error: e.toString(),
         });
       }
       return;
-    case "image":
+    case 'div':
+      try {
+        body.append(generatePageDiv(arg.line));
+        // sending msg
+        event.sender.send('render-line-reply', { status: true, error: null });
+      } catch (e) {
+        event.sender.send('render-line-reply', {
+          status: false,
+          error: e.toString(),
+        });
+      }
+      return;
+    case 'image':
       await getImageFromPath(arg.line)
         .then((img) => {
           body.append(img);
-          event.sender.send("render-line-reply", { status: true, error: null });
+          event.sender.send('render-line-reply', { status: true, error: null });
         })
         .catch((e) => {
-          event.sender.send("render-line-reply", {
+          event.sender.send('render-line-reply', {
             status: false,
             error: e.toString(),
           });
         });
       return;
-    case "qrCode":
+    case 'qrCode':
       try {
         body.append(
           `<div id="qrCode${arg.lineIndex}" style="${
             arg.line.style
           };text-align: ${
-            arg.line.position ? "-webkit-" + arg.line.position : "-webkit-left"
+            arg.line.position ? '-webkit-' + arg.line.position : '-webkit-left'
           };"></div>`
         );
         new QRCode(document.getElementById(`qrCode${arg.lineIndex}`), {
           text: arg.line.value,
           width: arg.line.width ? arg.line.width : 1,
           height: arg.line.height ? arg.line.height : 15,
-          colorDark: "#000000",
-          colorLight: "#ffffff",
+          colorDark: '#000000',
+          colorLight: '#ffffff',
           correctLevel: QRCode.CorrectLevel.H,
         });
         // $(`#qrcode${barcodeNumber}`).attr('style',arg.style);
-        event.sender.send("render-line-reply", { status: true, error: null });
+        event.sender.send('render-line-reply', { status: true, error: null });
       } catch (e) {
-        event.sender.send("render-line-reply", {
+        event.sender.send('render-line-reply', {
           status: false,
           error: e.toString(),
         });
       }
       return;
-    case "barCode":
+    case 'barCode':
       try {
         body.append(`<div style="width: 100%;text-align: ${
-          arg.line.position ? arg.line.position : "left"
+          arg.line.position ? arg.line.position : 'left'
         }"class="barcode-container" style="text-align: center;width: 100%;">
                     <img class="barCode${arg.lineIndex}"  style="${
           arg.line.style
@@ -110,15 +122,15 @@ const renderDataToHTML = async (event, arg) => {
                 jsbarcode-displayvalue="${!!arg.line.displayValue}"/></div>`);
         JsBarcode(`.barCode${arg.lineIndex}`).init();
         // send
-        event.sender.send("render-line-reply", { status: true, error: null });
+        event.sender.send('render-line-reply', { status: true, error: null });
       } catch (e) {
-        event.sender.send("render-line-reply", {
+        event.sender.send('render-line-reply', {
           status: false,
           error: e.toString(),
         });
       }
       return;
-    case "text-column":
+    case 'text-column':
       // Creating table
       const tTable = $(
         `<table id="textColumn${arg.lineIndex}" class="textColumn" style="${arg.line.style};"></table>`
@@ -132,25 +144,25 @@ const renderDataToHTML = async (event, arg) => {
 
       // 2. Body
       if (arg.line.tableBody) {
-        const tRow = $("<tr></tr>");
+        const tRow = $('<tr></tr>');
         const promiseTBody = arg.line.tableBody.map(async (bodyRow) => {
           const tCol = $(`<td></td>`);
           const promisesRow = bodyRow.map(async (colArg) => {
-            if (typeof colArg === "object") {
+            if (typeof colArg === 'object') {
               switch (colArg.type) {
-                case "image":
+                case 'image':
                   await getImageFromPath(colArg)
                     .then((img) => {
                       tCol.append(img);
                     })
                     .catch((e) => {
-                      event.sender.send("render-line-reply", {
+                      event.sender.send('render-line-reply', {
                         status: false,
                         error: e.toString(),
                       });
                     });
                   break;
-                case "text":
+                case 'text':
                   tCol.append(generatePageText(colArg));
                   break;
               }
@@ -169,9 +181,9 @@ const renderDataToHTML = async (event, arg) => {
       }
 
       // send
-      event.sender.send("render-line-reply", { status: true, error: null });
+      event.sender.send('render-line-reply', { status: true, error: null });
       return;
-    case "table":
+    case 'table':
       // Creating table
       const tableContainer = $(`
                <div></div>`);
@@ -190,9 +202,9 @@ const renderDataToHTML = async (event, arg) => {
       // 1. Headers
       if (arg.line.tableHeader) {
         arg.line.tableHeader.forEach(async (headerArg, index) => {
-          if (typeof headerArg === "object") {
+          if (typeof headerArg === 'object') {
             switch (headerArg.type) {
-              case "image":
+              case 'image':
                 await getImageFromPath(headerArg)
                   .then((img) => {
                     const th = $(`<th></th>`);
@@ -200,14 +212,14 @@ const renderDataToHTML = async (event, arg) => {
                     tHeader.append(th);
                   })
                   .catch((e) => {
-                    event.sender.send("render-line-reply", {
+                    event.sender.send('render-line-reply', {
                       status: false,
                       error: e.toString(),
                     });
                   });
                 return;
-              case "text":
-                tHeader.append(generateTableCell(headerArg, "th"));
+              case 'text':
+                tHeader.append(generateTableCell(headerArg, 'th'));
                 return;
             }
           } else {
@@ -219,11 +231,11 @@ const renderDataToHTML = async (event, arg) => {
       // 2. Body
       if (arg.line.tableBody) {
         arg.line.tableBody.forEach((bodyRow) => {
-          const rowTr = $("<tr></tr>");
+          const rowTr = $('<tr></tr>');
           bodyRow.forEach(async (colArg, index) => {
-            if (typeof colArg === "object") {
+            if (typeof colArg === 'object') {
               switch (colArg.type) {
-                case "image":
+                case 'image':
                   await getImageFromPath(colArg)
                     .then((img) => {
                       const th = $(`<td></td>`);
@@ -231,13 +243,13 @@ const renderDataToHTML = async (event, arg) => {
                       rowTr.append(th);
                     })
                     .catch((e) => {
-                      event.sender.send("render-line-reply", {
+                      event.sender.send('render-line-reply', {
                         status: false,
                         error: e.toString(),
                       });
                     });
                   return;
-                case "text":
+                case 'text':
                   rowTr.append(generateTableCell(colArg));
                   return;
               }
@@ -252,9 +264,9 @@ const renderDataToHTML = async (event, arg) => {
       // 3. Footer
       if (arg.line.tableFooter) {
         arg.line.tableFooter.forEach(async (footerArg, index) => {
-          if (typeof footerArg === "object") {
+          if (typeof footerArg === 'object') {
             switch (footerArg.type) {
-              case "image":
+              case 'image':
                 await getImageFromPath(footerArg)
                   .then((img) => {
                     const footerTh = $(`<th></th>`);
@@ -262,14 +274,14 @@ const renderDataToHTML = async (event, arg) => {
                     tFooter.append(footerTh);
                   })
                   .catch((e) => {
-                    event.sender.send("render-line-reply", {
+                    event.sender.send('render-line-reply', {
                       status: false,
                       error: e.toString(),
                     });
                   });
                 return;
-              case "text":
-                tFooter.append(generateTableCell(footerArg, "th"));
+              case 'text':
+                tFooter.append(generateTableCell(footerArg, 'th'));
                 return;
             }
           } else {
@@ -285,7 +297,7 @@ const renderDataToHTML = async (event, arg) => {
       tableContainer.append(table);
       body.append(tableContainer);
       // send
-      event.sender.send("render-line-reply", { status: true, error: null });
+      event.sender.send('render-line-reply', { status: true, error: null });
       return;
   }
 };
@@ -298,14 +310,33 @@ const renderDataToHTML = async (event, arg) => {
 function generatePageText(arg) {
   const text = arg.value;
   const css = arg.css;
-  arg.style = arg.style ? arg.style : "";
-  const whiteSpace = getDataStyle(arg.style, "white-space");
+  arg.style = arg.style ? arg.style : '';
+  const whiteSpace = getDataStyle(arg.style, 'white-space');
 
-  const div = $(
-    whiteSpace == "normal"
+  const element = $(
+    whiteSpace == 'normal'
       ? `<textarea class="font input-text" style="${arg.style}">${text}</textarea>`
       : `<input class="font input-text" style="${arg.style}" value="${text}"/>`
   );
+  if (css) {
+    for (const key in css) {
+      const item = css[key];
+      element.css(key, item);
+    }
+  }
+  return element;
+}
+/**
+ * @function
+ * @name generatePageDiv
+ * @param arg {pass argumet of type PosPrintData}
+ * @description used for type text, used to generate type text
+ * */
+function generatePageDiv(arg) {
+  const text = arg.value;
+  const css = arg.css;
+  arg.style = arg.style ? arg.style : '';
+  const div = $(`<div class="font" style="${arg.style}">${text}</div>`);
   if (css) {
     for (const key in css) {
       const item = css[key];
@@ -317,9 +348,9 @@ function generatePageText(arg) {
 
 const getDataStyle = (style, propName) => {
   const propRegex = new RegExp(`^.*${propName}:\s*([^;}]*)[;}].*$`);
-  const test = propRegex.exec(style ?? "");
-  if (test) return test[1].trim() ?? "";
-  return "";
+  const test = propRegex.exec(style ?? '');
+  if (test) return test[1].trim() ?? '';
+  return '';
 };
 
 /**
@@ -328,12 +359,12 @@ const getDataStyle = (style, propName) => {
  * @param arg {pass argumet of type PosPrintData}
  * @description used for type text, used to generate type text
  * */
-function generateTableCell(arg, type = "td") {
+function generateTableCell(arg, type = 'td') {
   const text = arg.value;
   const css = arg.css;
-  arg.style = arg.style ? arg.style : "";
+  arg.style = arg.style ? arg.style : '';
   const th =
-    type === "th"
+    type === 'th'
       ? $(`<th style="padding:7px 2px;${arg.style}">${text}</th>`)
       : $(`<td style="padding:7px 2px;${arg.style}">${text}</td>`);
   if (css) {
@@ -354,8 +385,8 @@ function toDataUrl(url) {
       };
       reader.readAsDataURL(xhr.response);
     };
-    xhr.open("GET", url);
-    xhr.responseType = "blob";
+    xhr.open('GET', url);
+    xhr.responseType = 'blob';
     xhr.send();
   });
 }
@@ -367,7 +398,7 @@ function toDataUrl(url) {
  * */
 function getImageFromPath(arg) {
   return new Promise(async (resolve, reject) => {
-    let uri = "";
+    let uri = '';
     if (arg.path) {
       const data = fs.readFileSync(arg.path);
       let ext = path.extname(arg.path).slice(1);
@@ -375,17 +406,17 @@ function getImageFromPath(arg) {
         reject(
           new Error(
             ext +
-              " file type not supported, consider the types: " +
+              ' file type not supported, consider the types: ' +
               image_format.join()
           )
         );
       }
 
-      if (ext === "svg") {
-        ext = "svg+xml";
+      if (ext === 'svg') {
+        ext = 'svg+xml';
       }
       // insert image
-      uri = "data:image/" + ext + ";base64," + data.toString("base64");
+      uri = 'data:image/' + ext + ';base64,' + data.toString('base64');
     } else {
       uri = await toDataUrl(arg.value);
       // uri = arg.value;
@@ -393,14 +424,14 @@ function getImageFromPath(arg) {
 
     const img_con = $(
       `<div style="width: 100%;text-align:${
-        arg.position ? arg.position : "left"
+        arg.position ? arg.position : 'left'
       }"></div>`
     );
-    arg.style = arg.style ? arg.style : "";
+    arg.style = arg.style ? arg.style : '';
     const img = $(
       `<img src="${uri}" style="height: ${
-        arg.height ? arg.height : "50px"
-      };width: ${arg.width ? arg.width : "auto"};${arg.style}" />`
+        arg.height ? arg.height : '50px'
+      };width: ${arg.width ? arg.width : 'auto'};${arg.style}" />`
     );
     if (arg.css) {
       for (const key in arg.css) {
