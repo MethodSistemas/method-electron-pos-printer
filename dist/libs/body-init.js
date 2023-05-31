@@ -81,9 +81,7 @@ const renderDataToHTML = async (event, arg) => {
     case 'qrCode':
       try {
         body.append(
-          `<div id="qrCode${arg.lineIndex}" style="${
-            arg.line.style
-          };text-align: ${
+          `<div id="qrCode${arg.lineIndex}" style="${arg.line.style};text-align: ${
             arg.line.position ? '-webkit-' + arg.line.position : '-webkit-left'
           };"></div>`
         );
@@ -109,15 +107,11 @@ const renderDataToHTML = async (event, arg) => {
         body.append(`<div style="width: 100%;text-align: ${
           arg.line.position ? arg.line.position : 'left'
         }"class="barcode-container" style="text-align: center;width: 100%;">
-                    <img class="barCode${arg.lineIndex}"  style="${
-          arg.line.style
-        }"
+                    <img class="barCode${arg.lineIndex}"  style="${arg.line.style}"
                 jsbarcode-value="${arg.line.value}"
                 jsbarcode-width="${arg.line.width ? arg.line.width : 1}"
                 jsbarcode-height="${arg.line.height ? arg.line.height : 15}"
-                jsbarcode-fontsize="${
-                  arg.line.fontsize ? arg.line.fontsize : 12
-                }"
+                jsbarcode-fontsize="${arg.line.fontsize ? arg.line.fontsize : 12}"
                 jsbarcode-margin="0"
                 jsbarcode-displayvalue="${!!arg.line.displayValue}"/></div>`);
         JsBarcode(`.barCode${arg.lineIndex}`).init();
@@ -132,9 +126,7 @@ const renderDataToHTML = async (event, arg) => {
       return;
     case 'text-column':
       // Creating table
-      const tTable = $(
-        `<table id="textColumn${arg.lineIndex}" class="textColumn" style="${arg.line.style};"></table>`
-      );
+      const tTable = $(`<table id="textColumn${arg.lineIndex}" class="textColumn" style="${arg.line.style};"></table>`);
       if (arg.line.css) {
         for (const key in arg.line.css) {
           const item = arg.line.css[key];
@@ -187,9 +179,7 @@ const renderDataToHTML = async (event, arg) => {
       // Creating table
       const tableContainer = $(`
                <div></div>`);
-      const table = $(
-        `<table id="table${arg.lineIndex}" class="table" style="${arg.line.style}"></table>`
-      );
+      const table = $(`<table id="table${arg.lineIndex}" class="table" style="${arg.line.style}"></table>`);
       if (arg.line.css) {
         for (const key in arg.line.css) {
           const item = arg.line.css[key];
@@ -403,13 +393,7 @@ function getImageFromPath(arg) {
       const data = fs.readFileSync(arg.path);
       let ext = path.extname(arg.path).slice(1);
       if (image_format.indexOf(ext) === -1) {
-        reject(
-          new Error(
-            ext +
-              ' file type not supported, consider the types: ' +
-              image_format.join()
-          )
-        );
+        reject(new Error(ext + ' file type not supported, consider the types: ' + image_format.join()));
       }
 
       if (ext === 'svg') {
@@ -422,16 +406,12 @@ function getImageFromPath(arg) {
       // uri = arg.value;
     }
 
-    const img_con = $(
-      `<div style="width: 100%;text-align:${
-        arg.position ? arg.position : 'left'
-      }"></div>`
-    );
+    const img_con = $(`<div style="width: 100%;text-align:${arg.position ? arg.position : 'left'}"></div>`);
     arg.style = arg.style ? arg.style : '';
     const img = $(
-      `<img src="${uri}" style="height: ${
-        arg.height ? arg.height : '50px'
-      };width: ${arg.width ? arg.width : 'auto'};${arg.style}" />`
+      `<img src="${uri}" style="height: ${arg.height ? arg.height : '50px'};width: ${arg.width ? arg.width : 'auto'};${
+        arg.style
+      }" />`
     );
     if (arg.css) {
       for (const key in arg.css) {

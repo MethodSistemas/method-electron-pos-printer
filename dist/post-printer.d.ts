@@ -1,4 +1,4 @@
-import { PosPrintData, PosPrintOptions } from "./models";
+import { PosPrintData, PosPrintOptions } from './models';
 /**
  * @class PosPrinter
  * **/
@@ -6,9 +6,9 @@ export declare class PosPrinter {
     /**
      * @Method: Print object
      * @Param arg {any}
-     * @Return {Promise}
+     * @return {Promise<boolean>}
      */
-    static print(data: PosPrintData[], options: PosPrintOptions): Promise<any>;
+    static print(data: PosPrintData[], options: PosPrintOptions): Promise<boolean>;
     /**
      * @Method
      * @Param data {any[]}

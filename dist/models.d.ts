@@ -1,21 +1,50 @@
 export interface PosPrintOptions {
     /**
+     * @description Print options
+     * {@link https://www.electronjs.org/docs/latest/api/web-contents#contentsprintoptions-callback}
      * @field copies: number of copies to print
      * @field preview: bool，false=print，true=pop preview window
      * @field deviceName: string，default device name, check it at webContent.getPrinters()
      * @field timeoutPerLine: int，timeout，actual time is ：data.length * timeoutPerLine ms
      * @field silent: To print silently
+     * @field pathTemplate: Path to HTML file for custom print options
      */
+    header?: string;
+    width?: string | number;
+    footer?: string;
     copies?: number;
     preview?: boolean;
-    printerName: string;
+    printerName?: string;
     margin?: string;
     timeOutPerLine?: number;
-    width?: string;
     silent?: boolean;
+    color?: boolean;
+    printBackground?: boolean;
+    margins?: {
+        marginType?: 'default' | 'none' | 'printableArea' | 'custom';
+        top?: number;
+        bottom?: number;
+        right?: number;
+        left?: number;
+    };
+    landscape?: boolean;
     scaleFactor?: number;
-    pageSize?: SizeOptions;
+    pagesPerSheet?: number;
+    collate?: boolean;
+    pageRanges?: {
+        from: number;
+        to: number;
+    }[];
+    duplexMode?: 'simplex' | 'shortEdge' | 'longEdge';
+    pageSize?: PaperSize | SizeOptions;
+    dpi?: {
+        horizontal: number;
+        vertical: number;
+    };
+    pathTemplate?: string;
 }
+export declare type PageSize = 'A3' | 'A4' | 'A5' | 'Legal' | 'Letter' | 'Tabloid';
+export declare type PaperSize = '80mm' | '78mm' | '76mm' | '57mm' | '58mm' | '44mm';
 export interface SizeOptions {
     height: number;
     width: number;

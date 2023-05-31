@@ -2,6 +2,17 @@
 /*
  * Copyright (c) 2019-2020. Author Hubert Formin <hformin@gmail.com>
  */
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -40,18 +51,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PosPrinter = void 0;
-if (process.type == "renderer") {
+var utils_1 = require("./utils");
+if (process.type == 'renderer') {
     throw new Error('method-electron-pos-printer: use remote.require("method-electron-pos-printer") in render process');
 }
-var _a = require("electron"), BrowserWindow = _a.BrowserWindow, ipcMain = _a.ipcMain;
-// ipcMain.on('pos-print', (event, arg)=> {
-//     const {data, options} = JSON.parse(arg);
-//     PosPrinter.print(data, options).then((arg)=>{
-//         event.sender.send('print-pos-reply', {status: true, error: {}});
-//     }).catch((err)=>{
-//         event.sender.send('print-pos-reply', {status: false, error: err});
-//     });
-// });
+var _a = require('electron'), BrowserWindow = _a.BrowserWindow, ipcMain = _a.ipcMain;
 /**
  * @class PosPrinter
  * **/
@@ -61,42 +65,55 @@ var PosPrinter = /** @class */ (function () {
     /**
      * @Method: Print object
      * @Param arg {any}
-     * @Return {Promise}
+     * @return {Promise<boolean>}
      */
     PosPrinter.print = function (data, options) {
         var _this = this;
         return new Promise(function (resolve, reject) {
-            // reject if printer name is not set in no preview mode
-            if (!options.preview && !options.printerName) {
-                reject(new Error("A printer name is required").toString());
+            /**
+             * Validation
+             */
+            // 1. Reject if printer name is not set in live mode
+            if (!options.preview && !options.printerName && !options.silent) {
+                reject(new Error("A printer name is required, if you don't want to specify a printer name, set silent to true").toString());
             }
-            // else
+            // 2. Reject if pageSize is object and pageSize.height or pageSize.width is not set
+            if (typeof options.pageSize == 'object') {
+                if (!options.pageSize.height || !options.pageSize.width) {
+                    reject(new Error('height and width properties are required for options.pageSize'));
+                }
+            }
             var printedState = false; // If the job has been printer or not
             var window_print_error = null; // The error returned if the printing fails
-            var timeOutPerline = options.timeOutPerLine
-                ? options.timeOutPerLine
-                : 400;
+            var timeOut = options.timeOutPerLine ? options.timeOutPerLine * data.length + 200 : 400 * data.length + 200;
+            /**
+             * If in live mode i.e. `options.preview` is false & if `options.silent` is false
+             * Check after a timeOut if the print data has been rendered and printed,
+             * If the data is rendered & printer, printerState will be set to true.
+             *
+             * This is done because we don't want the printing process to hang, so after a specific time, we check if the
+             * printing was completed and resolve/reject the promise.
+             *
+             * The printing process can hang (i.e. the print promise never gets resolved) if the process is trying to
+             * send a print job to a printer that is not connected.
+             *
+             */
             if (!options.preview || !options.silent) {
-                // setTimeout(() => {
-                //     if (!printedState) {
-                //         const errorMsg = window_print_error ? window_print_error: 'TimedOut';
-                //         reject(errorMsg);
-                //         printedState = true;
-                //     }
-                // }, timeOutPerline * data.length + 200);
+                setTimeout(function () {
+                    if (!printedState) {
+                        var errorMsg = window_print_error || '[TimedOutError] Make sure your printer is connected';
+                        reject(errorMsg);
+                        printedState = true;
+                    }
+                }, timeOut);
             }
             // open electron window
-            var mainWindow = new BrowserWindow({
-                width: 210,
-                height: 1200,
-                show: !!options.preview,
-                webPreferences: {
+            var mainWindow = new BrowserWindow(__assign(__assign({}, utils_1.parsePaperSize(options.pageSize)), { show: !!options.preview, webPreferences: {
                     nodeIntegration: true,
                     contextIsolation: false,
-                },
-            });
+                } }));
             // mainWindow
-            mainWindow.on("closed", function () {
+            mainWindow.on('closed', function () {
                 mainWindow = null;
             });
             /*mainWindow.loadURL(url.format({
@@ -105,8 +122,9 @@ var PosPrinter = /** @class */ (function () {
                       slashes: true,
                       // baseUrl: 'dist'
                   }));*/
-            mainWindow.loadFile(__dirname + "/pos.html");
-            mainWindow.webContents.on("did-finish-load", function () { return __awaiter(_this, void 0, void 0, function () {
+            mainWindow.loadFile(__dirname + '/pos.html');
+            mainWindow.webContents.on('did-finish-load', function () { return __awaiter(_this, void 0, void 0, function () {
+                var _this = this;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0: 
@@ -119,7 +137,7 @@ var PosPrinter = /** @class */ (function () {
                         //     return;
                         // }
                         // else start initialize render prcess page
-                        return [4 /*yield*/, sendIpcMsg("body-init", mainWindow.webContents, options)];
+                        return [4 /*yield*/, sendIpcMsg('body-init', mainWindow.webContents, options)];
                         case 1:
                             // get system printers
                             // const system_printers = mainWindow.webContents.getPrinters();
@@ -136,33 +154,42 @@ var PosPrinter = /** @class */ (function () {
                              *
                              */
                             return [2 /*return*/, PosPrinter.renderPrintDocument(mainWindow, data)
-                                    .then(function () {
+                                    .then(function () { return __awaiter(_this, void 0, void 0, function () {
+                                    var pageSize, clientHeight;
                                     var _a;
-                                    if (!options.preview) {
-                                        mainWindow.webContents.print({
-                                            silent: !!options.silent,
-                                            printBackground: true,
-                                            deviceName: options.printerName,
-                                            copies: options.copies ? options.copies : 1,
-                                            scaleFactor: (_a = options.scaleFactor) !== null && _a !== void 0 ? _a : 100,
-                                            pageSize: options.pageSize ? options.pageSize : "A4",
-                                        }, function (arg, err) {
-                                            // console.log(arg, err);
-                                            if (err) {
-                                                window_print_error = err;
-                                                reject(err);
-                                            }
-                                            if (!printedState) {
-                                                resolve({ complete: arg });
-                                                printedState = true;
-                                            }
-                                            mainWindow.close();
-                                        });
-                                    }
-                                    else {
-                                        resolve({ complete: true });
-                                    }
-                                })
+                                    return __generator(this, function (_b) {
+                                        switch (_b.label) {
+                                            case 0:
+                                                pageSize = utils_1.parsePaperSizeInMicrons(options.pageSize);
+                                                if (!(typeof options.pageSize === 'string')) return [3 /*break*/, 2];
+                                                return [4 /*yield*/, mainWindow.webContents.executeJavaScript('document.body.clientHeight')];
+                                            case 1:
+                                                clientHeight = _b.sent();
+                                                if (typeof pageSize == 'object') {
+                                                    pageSize.height = utils_1.convertPixelsToMicrons(clientHeight);
+                                                }
+                                                _b.label = 2;
+                                            case 2:
+                                                if (!options.preview) {
+                                                    mainWindow.webContents.print(__assign(__assign(__assign(__assign(__assign(__assign(__assign(__assign(__assign(__assign(__assign({ silent: !!options.silent, printBackground: !!options.printBackground, deviceName: options.printerName, copies: options.copies ? options.copies : 1, scaleFactor: (_a = options.scaleFactor) !== null && _a !== void 0 ? _a : 100, pageSize: pageSize }, (options.header && { header: options.header })), (options.footer && { footer: options.footer })), (options.color && { color: options.color })), (options.margins && { margins: options.margins })), (options.landscape && { landscape: options.landscape })), (options.scaleFactor && { scaleFactor: options.scaleFactor })), (options.pagesPerSheet && { pagesPerSheet: options.pagesPerSheet })), (options.collate && { collate: options.collate })), (options.pageRanges && { pageRanges: options.pageRanges })), (options.duplexMode && { duplexMode: options.duplexMode })), (options.dpi && { dpi: options.dpi })), function (arg, err) {
+                                                        if (err) {
+                                                            window_print_error = err;
+                                                            reject(err);
+                                                        }
+                                                        if (!printedState) {
+                                                            resolve(arg);
+                                                            printedState = true;
+                                                        }
+                                                        mainWindow.close();
+                                                    });
+                                                }
+                                                else {
+                                                    resolve(true);
+                                                }
+                                                return [2 /*return*/];
+                                        }
+                                    });
+                                }); })
                                     .catch(function (err) { return reject(err); })];
                     }
                 });
@@ -193,7 +220,7 @@ var PosPrinter = /** @class */ (function () {
                                     //     reject(new Error('An Image path is required for type image').toString());
                                     //     return;
                                     // }
-                                    return [4 /*yield*/, sendIpcMsg("render-line", window.webContents, { line: line, lineIndex: lineIndex })
+                                    return [4 /*yield*/, sendIpcMsg('render-line', window.webContents, { line: line, lineIndex: lineIndex })
                                             .then(function (result) {
                                             if (!result.status) {
                                                 window.close();
@@ -220,7 +247,7 @@ var PosPrinter = /** @class */ (function () {
                     case 1:
                         _a.sent();
                         // when the render process is done rendering the page, resolve
-                        resolve({ message: "page-rendered" });
+                        resolve({ message: 'page-rendered' });
                         return [2 /*return*/];
                 }
             });

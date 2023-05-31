@@ -1,13 +1,13 @@
 {
   "name": "method-electron-pos-printer",
-  "version": "1.2.27",
+  "version": "1.2.35",
   "description": "Electron thermal 58mm printer",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "mocha",
     "start": "npm run build && npm publish",
-    "demo": "electron ./demo/",
+    "demo": "npm run build && electron ./demo/",
     "pack": "webpack --config ./webpack.config.js",
     "build": "tsc",
     "test:all": "mocha -R mocha-jenkins-reporter --timeout 20000 \"./src/test/**/*test-*.js\"",
