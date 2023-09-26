@@ -36,7 +36,7 @@ export interface PosPrintOptions {
   collate?: boolean;
   pageRanges?: { from: number; to: number }[];
   duplexMode?: 'simplex' | 'shortEdge' | 'longEdge';
-  pageSize?: PaperSize | SizeOptions;
+  pageSize?: PaperSize | SizeOptions | PageSize;
   dpi?: { horizontal: number; vertical: number };
   pathTemplate?: string;
 }

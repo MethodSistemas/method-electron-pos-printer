@@ -20,7 +20,7 @@ export function sendIpcMsg(channel: any, webContents: any, arg: any) {
   });
 }
 
-export function parsePaperSize(pageSize?: PaperSize | SizeOptions): { width: number; height: number } {
+export function parsePaperSize(pageSize?: PaperSize | SizeOptions | PageSize): { width: number; height: number } {
   let width = 219,
     height = 1200;
   if (typeof pageSize == 'string') {

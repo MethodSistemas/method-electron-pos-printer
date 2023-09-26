@@ -5,7 +5,7 @@ import { PageSize, PaperSize, SizeOptions } from './models';
  *
  */
 export declare function sendIpcMsg(channel: any, webContents: any, arg: any): Promise<unknown>;
-export declare function parsePaperSize(pageSize?: PaperSize | SizeOptions): {
+export declare function parsePaperSize(pageSize?: PaperSize | SizeOptions | PageSize): {
     width: number;
     height: number;
 };
