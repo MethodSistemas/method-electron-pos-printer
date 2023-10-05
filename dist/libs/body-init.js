@@ -69,6 +69,7 @@ const renderDataToHTML = async (event, arg) => {
       await getImageFromPath(arg.line)
         .then((img) => {
           body.append(img);
+          console.log(body, img, 'body');
           event.sender.send('render-line-reply', { status: true, error: null });
         })
         .catch((e) => {
@@ -409,9 +410,9 @@ function getImageFromPath(arg) {
     const img_con = $(`<div style="width: 100%;text-align:${arg.position ? arg.position : 'left'}"></div>`);
     arg.style = arg.style ? arg.style : '';
     const img = $(
-      `<img src="${uri}" style="height: ${arg.height ? arg.height : '50px'};width: ${arg.width ? arg.width : 'auto'};${
-        arg.style
-      }" />`
+      `<img src="${uri}" style="position:absolute; height: ${arg.height ? arg.height : '50px'};width: ${
+        arg.width ? arg.width : 'auto'
+      };${arg.style}" />`
     );
     if (arg.css) {
       for (const key in arg.css) {
@@ -421,6 +422,6 @@ function getImageFromPath(arg) {
     }
     // appending
     img_con.prepend(img);
-    resolve(img_con);
+    resolve(img);
   });
 }

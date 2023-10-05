@@ -82,8 +82,8 @@ export function parsePaperSizeInMicrons(pageSize?: PaperSize | PageSize | SizeOp
         return pageSize;
     }
   } else if (typeof pageSize == 'object') {
-    width = convertPixelsToMicrons(pageSize.width);
-    height = convertPixelsToMicrons(pageSize.height);
+    width = pageSize.width;
+    height = pageSize.height;
   } else {
     return 'A4';
   }

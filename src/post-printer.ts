@@ -21,7 +21,8 @@ export class PosPrinter {
    * @return {Promise<boolean>}
    */
   public static print(data: PosPrintData[], options: PosPrintOptions): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    console.log(data, options);
+    return new Promise(async (resolve, reject) => {
       /**
        * Validation
        */
@@ -53,15 +54,15 @@ export class PosPrinter {
        * send a print job to a printer that is not connected.
        *
        */
-      if (!options.preview || !options.silent) {
-        setTimeout(() => {
-          if (!printedState) {
-            const errorMsg = window_print_error || '[TimedOutError] Make sure your printer is connected';
-            reject(errorMsg);
-            printedState = true;
-          }
-        }, timeOut);
-      }
+      // if (!options.preview || !options.silent) {
+      //   setTimeout(() => {
+      //     if (!printedState) {
+      //       const errorMsg = window_print_error || '[TimedOutError] Make sure your printer is connected';
+      //       reject(errorMsg);
+      //       printedState = true;
+      //     }
+      //   }, timeOut);
+      // }
       // open electron window
       let mainWindow = new BrowserWindow({
         ...parsePaperSize(options.pageSize),
@@ -97,7 +98,7 @@ export class PosPrinter {
          * Render print data as html in the mainwindow render process
          *
          */
-        return PosPrinter.renderPrintDocument(mainWindow, data)
+        return await PosPrinter.renderPrintDocument(mainWindow, data)
           .then(async () => {
             let pageSize = parsePaperSizeInMicrons(options.pageSize);
             // Get the height of content window, if the pageSize is a string
@@ -157,12 +158,8 @@ export class PosPrinter {
    */
   private static renderPrintDocument(window: any, data: PosPrintData[]): Promise<any> {
     return new Promise(async (resolve, reject) => {
-      const promises = data.map(async (line, lineIndex) => {
-        // if (line.type === 'image' && !line.path) {
-        //     window.close();
-        //     reject(new Error('An Image path is required for type image').toString());
-        //     return;
-        // }
+      for (let lineIndex = 0; lineIndex < data.length; lineIndex++) {
+        const line = data[lineIndex];
         await sendIpcMsg('render-line', window.webContents, { line, lineIndex })
           .then((result: any) => {
             if (!result.status) {
@@ -175,9 +172,15 @@ export class PosPrinter {
             reject(error);
             return;
           });
-      });
+      }
+      // const promises = data.map(async (line, lineIndex) => {
+      //   // if (line.type === 'image' && !line.path) {
+      //   //     window.close();
+      //   //     reject(new Error('An Image path is required for type image').toString());
+      //   //     return;
+      //   // }
 
-      await Promise.all(promises);
+      // await Promise.all(promises);
 
       // when the render process is done rendering the page, resolve
       resolve({ message: 'page-rendered' });
